@@ -16,39 +16,25 @@ When a packet is visible we know that source is out because it comes from some p
 We check up the destination in our database when we want to forward traffic table.
 If we are unsure of the port, we just send the message all ports other from the one it entered through.
 
-Our algorithm, in brief, looks like this: 
 
-Step 1: For each packet that we get from the switch
-- Use the source address and switch port to update the port table
+## Firewall Algorithm
 
-.... End of step 1.....
+Before understanding the algorithm, we need to understand the type of topology we are dealing with.
+Each and every host is connected to the common switch which uses Open Flow protocol and that switch is in turn connected to the Pox controller. 
 
-Step 2: Drop packet if link-local traffic ( packets destination is a bridge filtered address)
+Every packet that is passing through our network will go through the switch. And for every packet, the switch will send it to the controller. The controller in the end makes the decision to either allow the packet or to drop the packet based on the rules. 
 
-.... End of Step 2.....
+For demonstration purposes we have written two rules for Level 2 and Level 3 firewall. Before running our topology we need to make sure the Pox controller is running with the given rules. Once Pox controller is set up, we can start our mininet topology.
 
-Step 3: Is destination multicast?
-     Yes: Flood the packet
+Once the system is set up and we start pinging the hosts or when packet transfer starts happening: \
+**Step 1**: The packet goes to the switch. \
+**Step 2**: The switch sends it to the controller. \
+**Step 3**: The controller compares the packet details such as SRC, DST, PORT, etc. to the Firewall Rules. \
+**Step 4**: If the controller detects that a rule has been written for this packet then the controller drops the packet. \
+**Step 5**: If not, then the controller sends it back to the Switch. The switch does not know "who" the DST is, so it floods the packet and slowly it builds the routing table. \
 
-.... End of Step 3.....
 
-Step 4: Port for destination address in our address/port table?
-     No: Flood the packet
-
-.... End of Step 4.....
-
-Step 5: Is output port the same as input port?
-     Yes: Drop packet and similar ones for a while
-
-.... End of Step 5.....
-
-Step 6: Install flow table entry in the switch so that this
-     flow goes out the appopriate port
-     Send the packet out appropriate port
-
-.... End of Step 6.....
-
-## Code organisation
+## Code Organization
 
 The `topology.py` conatins the mininet Script which creates the topology for a simple test network.
 `Firewall_controller.py` 
