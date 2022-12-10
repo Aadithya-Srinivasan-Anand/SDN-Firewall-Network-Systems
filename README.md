@@ -83,6 +83,11 @@ Deep packet inspection (DPI) is a type of data processing that inspects in detai
 In our project we have implemented packet caputure analysis from capture files obtained from MACCDC.Our analysis included wireshark capture of 8.6 million packets and histogram analysis for anaomoly detection and protocol hierarchy statistics to verify any anomaly in TCP, HTTP or any file transfer protocols.
 Our results included examining for natural deviations from the rule of thumb, and concluding with no intrusion or anomoly detection for the capture packet, with expected protocols detected.
 
+## Packet Statistics
+
+`TCP - 98.2 %
+HTTP - 1.8%`
+
 ## Contributers
 
 - [@saiabhishek28](https://www.github.com/saiabhishek28)
