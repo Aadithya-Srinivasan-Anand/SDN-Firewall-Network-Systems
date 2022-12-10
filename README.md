@@ -14,7 +14,7 @@ When a packet is seen, we want to output it on a port that will lead to the fina
 To achieve this, we create a table that links ports to addresses. We fill the table with data by tracking traffic.
 When a packet is visible we know that source is out because it comes from some port.
 We check up the destination in our database when we want to forward traffic table.
-If we are unsure of the port, we just send the message all ports other from the one it entered through.
+If we are unsure of the port, we just send the message all ports other from the one it entered through. Our implementation is based on the Pox L-2 Learning Switch.
 
 
 ## Firewall Algorithm
