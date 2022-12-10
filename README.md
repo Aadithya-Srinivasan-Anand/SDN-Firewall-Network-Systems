@@ -74,6 +74,14 @@ h2 ping h3
 h1 wget 127.0.0.3
 ```
 
+## Deep Packet Inspection
+
+Deep packet inspection (DPI) is a type of data processing that inspects in detail the data being sent over a computer network, and may take actions such as alerting, blocking, re-routing, or logging it accordingly. Deep packet inspection is often used to baseline application behavior, analyze network usage, troubleshoot network performance, ensure that data is in the correct format, check for malicious code, eavesdropping, and internet censorship.
+
+### wireshark implementation and analysis of packets
+
+In our project we have implemented packet caputure analysis from capture files obtained from MACCDC.Our analysis included wireshark capture of 8.6 million packets and histogram analysis for anaomoly detection and protocol hierarchy statistics to verify any anomaly in TCP, HTTP or any file transfer protocols.
+Our results included examining for natural deviations from the rule of thumb, and concluding with no intrusion or anomoly detection for the capture packet, with expected protocols detected.
 
 ## Contributers
 
