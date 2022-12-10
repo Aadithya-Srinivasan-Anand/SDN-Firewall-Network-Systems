@@ -53,3 +53,46 @@ Step 6: Install flow table entry in the switch so that this
 The `topology.py` conatins the mininet Script which creates the topology for a simple test network.
 `Firewall_controller.py` 
 
+
+## Deployment
+Required Dependencies: Pox framework and Mininet.
+
+To install Mininet: 
+```bash
+sudo apt-get upgrade
+sudo apt-get update
+sudo apt-get install mininet
+```
+
+To install Pox:
+```bash
+git clone http://github.com/noxrepo/pox
+cd pox
+```
+
+Once you are in the pox folder: 
+```bash
+  ./pox.py <firewall>
+```
+
+Then once your controller is running, we can start the mininet topology:
+
+```bash
+  sudo python <topology.py>
+```
+
+Then you can test your system using Mininet commands like:
+```bash
+h1 ping h2
+h2 ping h3
+h1 wget 127.0.0.3
+```
+
+
+## Contributers
+
+- [@saiabhishek28](https://www.github.com/saiabhishek28)
+- [@Aadithya-Srinivasan-Anand](https://github.com/Aadithya-Srinivasan-Anand)
+- Professor Jose Santos (Instructor)
+
+
