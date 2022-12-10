@@ -1,14 +1,14 @@
 """
 Firewall based SDN network
 """
-from mininet.Topo import Topology
+from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.util import dumpNodeConnections
 from mininet.log import setLogLevel
 from mininet.node import RemoteController
 from mininet.cli import CLI
 
-class Topo_Single_Switchy(Topology):
+class Topo_Single_Switchy(Topo):
     "Single switch connected to n hosts."
     def build(self, n=2):
         switch = self.addSwitch('s1', dpid="00000000000007")
