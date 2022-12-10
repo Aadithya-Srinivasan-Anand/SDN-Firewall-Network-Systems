@@ -94,11 +94,9 @@ class LearningSwitch (object):
 
     def flood (message = None):
       msg = of.ofp_packet_out()
-      if time.time() - self.connection.connect_time >= _flood_delay:
-        # Only flood if we've been connected for a little while...
+      if time.time() - self.connection.connect_time >= _flood_delay: # flood only is time>= req.
 
         if self.hold_down_expired is False:
-          # Oh yes it is!
           self.hold_down_expired = True
           log.info("%s: Flood hold-down expired -- flooding", dpid_to_str(event.dpid))
 
@@ -135,8 +133,6 @@ class LearningSwitch (object):
 
     self.macTopologyrt[packet.src] = event.port 
     dpidstr = dpid_to_str(event.connection.dpid) # DPID of the connecting switch
-    #log.debug("Connection ID: %s" % dpidstr)
-
     if isinstance(packet.next, ipv4):
       log.debug("%i IP %s => %s", inport, packet.next.srcip,packet.next.dstip)
       segmant = packet.find('tcp')
