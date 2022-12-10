@@ -1,7 +1,5 @@
 """
 A Firewall based SDN Controller
-
-It is derived from one written live for an l2_learning.py
 """
 
 from pox.core import core
@@ -16,9 +14,7 @@ import time
 
 log = core.getLogger()
 
-# We don't want to flood immediately when a switch connects.
-# Can be overriden on commandline.
-_flood_delay = 0
+_flood_delay = 0 # Delay immediate flooding when connecting is made
 
 class LearningSwitch (object): 
   def __init__ (self, connection, transparent):
@@ -26,26 +22,17 @@ class LearningSwitch (object):
     self.connection = connection
     self.transparent = transparent
 
-    # Our table
-    self.macTopologyrt = {}
+    self.macTopologyrt = {} # Table gen
 
-    # Our firewall table in the form of Dictionary
-    self.firewall = {}
+    self.firewall = {} # firewall gen - dictonary format
 
-    # Add a Couple of Rules Static entries
-    # Two type of rules: (srcip,dstip) or (dstip,dstport)
-    self.Implement_FW_rule(dpid_to_str(connection.dpid), 0, IPAddr('10.0.0.1'), IPAddr('10.0.0.4'),0)
+    self.Implement_FW_rule(dpid_to_str(connection.dpid), 0, IPAddr('10.0.0.1'), IPAddr('10.0.0.4'),0) # rule entries
 
+    connection.addListeners(self) # listening to upcomming packets
 
-    # We want to hear PacketIn messages, so we listen
-    # to the connection
-    connection.addListeners(self)
-
-    # We just use this to know when to log a helpful message
     self.hold_down_expired = _flood_delay == 0
 
-  # function that allows adding firewall rules into the firewall table
-  def Implement_FW_rule (self, dpidstr, macstr, srcipstr, dstipstr, dstport,value=True):
+  def Implement_FW_rule (self, dpidstr, macstr, srcipstr, dstipstr, dstport,value=True): # adding rules
       if srcipstr == 0 and dstipstr == 0:
         self.firewall[(dpidstr,macstr)] = True
         log.debug("Adding L2-firewall rule of Src(%s) in %s", macstr, dpidstr)
@@ -59,8 +46,7 @@ class LearningSwitch (object):
         self.firewall[(dpidstr,srcipstr,dstipstr,dstport)] = True
         log.debug("Adding firewall rule of %s -> %s,%s in %s", srcipstr, dstipstr, dstport, dpidstr)
 
-  # function that allows deleting firewall rules from the firewall table
-  def Rule_deletion (self, dpidstr, macstr, srcipstr, dstipstr, dstport):
+  def Rule_deletion (self, dpidstr, macstr, srcipstr, dstipstr, dstport): # rule deletion
      try:
        if srcipstr == 0 and dstipstr == 0:
          del self.firewall[(dpidstr,macstr)]
@@ -77,8 +63,8 @@ class LearningSwitch (object):
      except KeyError:
        log.error("Cannot find Rule %s(%s) -> %s,%s in %s", srcipstr, macstr, dstipstr, dstport, dpidstr)
 
-  # check if packet is compliant to rules before proceeding
-  def Rule_Checker (self, dpidstr, macstr, srcipstr, dstipstr, dstport):
+  
+  def Rule_Checker (self, dpidstr, macstr, srcipstr, dstipstr, dstport): # checking compliance
     # Source Link blocked
     try:
       entry = self.firewall[(dpidstr, macstr)]
@@ -87,15 +73,13 @@ class LearningSwitch (object):
     except KeyError:
       log.debug("Rule Src(%s) NOT found in %s: L2-Rule NOT found", macstr, dpidstr)
 
-    # Host to Host blocked
     try:
-      entry = self.firewall[(dpidstr, srcipstr, dstipstr)]
+      entry = self.firewall[(dpidstr, srcipstr, dstipstr)] # blocking H-H
       log.info("L3-Rule (%s x->x %s) found in %s: DROP", srcipstr, dstipstr, dpidstr)
       return entry
     except KeyError:
       log.debug("Rule (%s -> %s) NOT found in %s: L3-Rule NOT found", srcipstr, dstipstr, dpidstr)
-
-    # Destination Process blocked
+      
     try:
       entry = self.firewall[(dpidstr, dstipstr, dstport)]
       log.info("L4-Rule Dst(%s,%s)) found in %s: DROP", dstipstr, dstport, dpidstr)
@@ -104,15 +88,11 @@ class LearningSwitch (object):
       log.debug("Rule Dst(%s,%s) NOT found in %s: L4-Rule NOT found", dstipstr, dstport, dpidstr)
       return False
 
-  def _handle_PacketIn (self, event):
-    """
-    Handle packet in messages from the switch to implement above algorithm.
-    """
+  def _handle_PacketIn (self, event): # alg implementaion
     packet = event.parsed
     inport = event.port
 
     def flood (message = None):
-      """ Floods the packet """
       msg = of.ofp_packet_out()
       if time.time() - self.connection.connect_time >= _flood_delay:
         # Only flood if we've been connected for a little while...
@@ -131,11 +111,7 @@ class LearningSwitch (object):
       msg.in_port = event.port
       self.connection.send(msg)
 
-    def drop (duration = None):
-      """
-      Drops this packet and optionally installs a flow to continue
-      dropping similar ones for a while
-      """
+    def drop (duration = None): # to drop packets with conditional check met
       if duration is not None:
         if not isinstance(duration, tuple):
           duration = (duration,duration)
@@ -157,10 +133,8 @@ class LearningSwitch (object):
         msg.data = event.ofp
         self.connection.send(msg)# send the message to the OpenFlow switch
 
-    self.macTopologyrt[packet.src] = event.port # 1
-
-    # Get the DPID of the Switch Connection
-    dpidstr = dpid_to_str(event.connection.dpid)
+    self.macTopologyrt[packet.src] = event.port 
+    dpidstr = dpid_to_str(event.connection.dpid) # DPID of the connecting switch
     #log.debug("Connection ID: %s" % dpidstr)
 
     if isinstance(packet.next, ipv4):
@@ -172,35 +146,32 @@ class LearningSwitch (object):
           drop()
           return
       else:
-        # Check the Firewall Rules in MAC and IPv4 Layer
-        if self.Rule_Checker(dpidstr, packet.src, packet.next.srcip, packet.next.dstip, 0) == True:
+        if self.Rule_Checker(dpidstr, packet.src, packet.next.srcip, packet.next.dstip, 0) == True:  # Check the Firewall Rules in MAC and IPv4 Layer
           drop()
           return
     elif isinstance(packet.next, arp):
-      # Check the Firewall Rules in MAC Layer
-      if self.Rule_Checker(dpidstr, packet.src, 0, 0, 0) == True:
+      if self.Rule_Checker(dpidstr, packet.src, 0, 0, 0) == True: # Check the Firewall Rules in MAC Layer
         drop()
         return
       a = packet.next
       log.debug("%i ARP %s %s => %s", inport, {arp.REQUEST:"request",arp.REPLY:"reply"}.get(a.opcode, 'op:%i' % (a.opcode,)), str(a.protosrc), str(a.protodst))
-    elif isinstance(packet.next, ipv6):
-      # Do not handle ipv6 packets
+    elif isinstance(packet.next, ipv6): #only ipv4 packets are handeled 
       return
 
-    if not self.transparent: # 2
+    if not self.transparent: 
       if packet.type == packet.LLDP_TYPE or packet.dst.isBridgeFiltered():
-        drop() # 2a
+        drop() 
         return
 
     if packet.dst.is_multicast:
-      flood() # 3a
+      flood() 
     else:
-      if packet.dst not in self.macTopologyrt: # 4
-        flood("Port for %s unknown -- flooding" % (packet.dst,)) # 4a
+      if packet.dst not in self.macTopologyrt: 
+        flood("Port for %s unknown -- flooding" % (packet.dst,)) 
       else:
         port = self.macTopologyrt[packet.dst]
-        if port == event.port: # 5
-          # 5a
+        if port == event.port
+          
           log.warning("Same port for packet from %s -> %s on %s.%s.  Drop." % (packet.src, packet.dst, dpid_to_str(event.dpid), port))
           drop(10)
           return
@@ -211,13 +182,10 @@ class LearningSwitch (object):
         msg.idle_timeout = 10
         msg.hard_timeout = 30
         msg.actions.append(of.ofp_action_output(port = port))
-        msg.data = event.ofp # 6a
+        msg.data = event.ofp
         self.connection.send(msg)
 
-class l2_learning (object):
-  """
-  Waits for OpenFlow switches to connect and makes them learning switches.
-  """
+class l2_learning (object): # once conneted - switch to learning switches
   def __init__ (self, transparent):
     core.openflow.addListeners(self)
     self.transparent = transparent
@@ -227,10 +195,7 @@ class l2_learning (object):
     LearningSwitch(event.connection, self.transparent)
 
 
-def launch (transparent=False, hold_down=_flood_delay):
-  """
-  Starts an L2 learning switch.
-  """
+def launch (transparent=False, hold_down=_flood_delay): # Launch the learning switch
   try:
     global _flood_delay
     _flood_delay = int(str(hold_down), 10)
